@@ -74,18 +74,20 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
     #-- fetch the 1st viewpoint
     # v = viewpoints[0]
     
-    npvs = [circle_make(d, v, maxdistance) for v in viewpoints]
-    # -- write this to disk
-    # with rasterio.open(output_file, 'w', 
+    npvs_array = [circle_make(d, v, maxdistance) for v in viewpoints]
+    npvs=npvs_array[1]
+    
+    # #write this to disk
+    with rasterio.open(output_file, 'w', 
 
-    #                    driver='GTiff', 
-    #                    height=npi.shape[0],
-    #                    width=npi.shape[1], 
-    #                    count=1, 
-    #                    dtype=rasterio.uint8,
-    #                    crs=d.crs, 
-    #                    transform=d.transform) as dst:
-    #     dst.write(npvs.astype(rasterio.uint8), 1)
+                       driver='GTiff', 
+                       height=npi.shape[0],
+                       width=npi.shape[1], 
+                       count=1, 
+                       dtype=rasterio.uint8,
+                       crs=d.crs, 
+                       transform=d.transform) as dst:
+        dst.write(npvs.astype(rasterio.uint8), 1)
 
     print(npvs)
     print("Viewshed file written to '%s'" % output_file)
