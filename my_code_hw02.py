@@ -13,7 +13,7 @@ from rasterio import features
 #%%
 
 
-def circle_make(d, v, maxdistance, ):
+def circle_make(d, v, maxdistance ):
     npi  = d.read(1)
     #-- index of this point in the numpy raster
     vrow_center, vcol_center = d.index(v[0], v[1])
@@ -56,18 +56,12 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
     Output:
         none (but output GeoTIFF file written to 'output-file')
     """  
-    
-    # [this code can and should be removed/modified/reutilised]
-    # [it's just there to help you]
-    # d is the rasterio file
-    #-- numpy of input
     npi  = d.read(1)
     #-- fetch the 1st viewpoint
     v = viewpoints[0]
 
-# 
+    circle_make(d, v, maxdistance)
     # -- write this to disk
-
     with rasterio.open(output_file, 'w', 
 
                        driver='GTiff', 
