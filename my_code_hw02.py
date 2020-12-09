@@ -31,7 +31,7 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
     
     # [this code can and should be removed/modified/reutilised]
     # [it's just there to help you]
-
+    # d is the rasterio file
     #-- numpy of input
     npi  = d.read(1)
     #-- fetch the 1st viewpoint
