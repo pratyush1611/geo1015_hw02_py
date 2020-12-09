@@ -39,8 +39,8 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
     #-- index of this point in the numpy raster
     vrow_center, vcol_center = d.index(v[0], v[1])
 
-    vrow_left,  vcol_bottom = d.index(v[0]-maxdistance, v[1]-maxdistance)
-    vrow_right, vcol_top    = d.index(v[0]+maxdistance, v[1]+maxdistance)
+    vrow_bottom,  vcol_left = d.index(v[0]-maxdistance, v[1]-maxdistance)
+    vrow_top, vcol_right    = d.index(v[0]+maxdistance, v[1]+maxdistance)
 
     #-- the results of the viewshed in npvs, all values=0
     npvs = numpy.zeros(d.shape, dtype=numpy.int8)
@@ -49,9 +49,9 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
     npvs[vrow_center , vcol_center] = v[2]
     for i,(row_orig , row) in enumerate(zip(npi,npvs)):
         for j,(val_orig,val) in enumerate(zip( row_orig , row)):
-            if i<vrow_left or i>vrow(right):
+            if i<vrow_top or i>vrow_bottom:
                 continue
-            elif j<vcol_top or j>:
+            elif j<vcol_left or j>vcol_right:
                 continue
             # do circle here #actually a square for now
             npvs[i,j] = npi[i,j]
