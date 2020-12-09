@@ -13,6 +13,34 @@ from rasterio import features
 #%%
 
 
+def circle_make(d, v, maxdistance, ):
+    npi  = d.read(1)
+    #-- index of this point in the numpy raster
+    vrow_center, vcol_center = d.index(v[0], v[1])
+    vrow_bottom,  vcol_left = d.index(v[0]-maxdistance, v[1]-maxdistance)
+    vrow_top, vcol_right    = d.index(v[0]+maxdistance, v[1]+maxdistance)
+
+    #-- the results of the viewshed in npvs, all values=0
+    npvs = numpy.ones(d.shape, dtype=numpy.int8)*3
+    
+    for i,(row_orig , row) in enumerate(zip(npi,npvs)):
+        for j,(val_orig,val) in enumerate(zip( row_orig , row)):
+            if i<vrow_top or i>vrow_bottom:
+                continue
+            elif j<vcol_left or j>vcol_right:
+                continue
+            # do circle here #actually a square for now
+            # npvs[i,j] = npi[i,j]
+            # circle compute
+            if ((math.pow((d.xy(i,j)[0] - v[0]),2) + math.pow( (d.xy(i,j)[1] - v[1]) , 2)  ) < math.pow(maxdistance,2)):
+                npvs[i,j] = npi[i,j]
+
+
+    #-- put center  pixel with value of height
+    npvs[vrow_center , vcol_center] = v[2]
+    return npvs
+#   
+
 def output_viewshed(d, viewpoints, maxdistance, output_file):
     """
     !!! TO BE COMPLETED !!!
@@ -36,27 +64,7 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
     npi  = d.read(1)
     #-- fetch the 1st viewpoint
     v = viewpoints[0]
-    #-- index of this point in the numpy raster
-    vrow_center, vcol_center = d.index(v[0], v[1])
 
-    vrow_bottom,  vcol_left = d.index(v[0]-maxdistance, v[1]-maxdistance)
-    vrow_top, vcol_right    = d.index(v[0]+maxdistance, v[1]+maxdistance)
-
-    #-- the results of the viewshed in npvs, all values=0
-    npvs = numpy.zeros(d.shape, dtype=numpy.int8)
-    # npvs = numpy.zeros(d.shape , dtype=bool)
-    #-- put that pixel with value of height
-    npvs[vrow_center , vcol_center] = v[2]
-    for i,(row_orig , row) in enumerate(zip(npi,npvs)):
-        for j,(val_orig,val) in enumerate(zip( row_orig , row)):
-            if i<vrow_top or i>vrow_bottom:
-                continue
-            elif j<vcol_left or j>vcol_right:
-                continue
-            # do circle here #actually a square for now
-            npvs[i,j] = npi[i,j]
-
-#   
 # 
     # -- write this to disk
 
@@ -75,7 +83,7 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
 #%%
 
 
-def Bresenham_with_rasterio(d):
+def Bresenham_with_rasterio(d, a, b):
     # d = rasterio dataset as above
     a = (10, 10)
     b = (100, 50)
