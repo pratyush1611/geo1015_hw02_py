@@ -4,13 +4,13 @@
 #-- [YOUR STUDENT NUMBER] 
 #-- [YOUR NAME] 
 #-- [YOUR STUDENT NUMBER] 
-
+#%%
 import sys
 import math
 import numpy
 import rasterio
 from rasterio import features
-
+#%%
 
 
 def output_viewshed(d, viewpoints, maxdistance, output_file):
@@ -37,14 +37,31 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
     #-- fetch the 1st viewpoint
     v = viewpoints[0]
     #-- index of this point in the numpy raster
-    vrow, vcol = d.index(v[0], v[1])
+    vrow_center, vcol_center = d.index(v[0], v[1])
+
+    vrow_left,  vcol_bottom = d.index(v[0]-maxdistance, v[1]-maxdistance)
+    vrow_right, vcol_top    = d.index(v[0]+maxdistance, v[1]+maxdistance)
+
     #-- the results of the viewshed in npvs, all values=0
     npvs = numpy.zeros(d.shape, dtype=numpy.int8)
-    #-- put that pixel with value 2
-    npvs[vrow , vcol] = 2
-    #-- write this to disk
+    # npvs = numpy.zeros(d.shape , dtype=bool)
+    #-- put that pixel with value of height
+    npvs[vrow_center , vcol_center] = v[2]
+    for i,(row_orig , row) in enumerate(zip(npi,npvs)):
+        for j,(val_orig,val) in enumerate(zip( row_orig , row)):
+            if i<vrow_left or i>vrow(right):
+                continue
+            elif j<vcol_top or j>:
+                continue
+            # do circle here #actually a square for now
+            npvs[i,j] = npi[i,j]
+
+#   
+# 
+    # -- write this to disk
 
     with rasterio.open(output_file, 'w', 
+
                        driver='GTiff', 
                        height=npi.shape[0],
                        width=npi.shape[1], 
@@ -55,7 +72,7 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
         dst.write(npvs.astype(rasterio.uint8), 1)
 
     print("Viewshed file written to '%s'" % output_file)
-
+#%%
 
 
 def Bresenham_with_rasterio(d):
