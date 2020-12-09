@@ -21,10 +21,11 @@ def circle_make(d, v, maxdistance ):
     vrow_top, vcol_right    = d.index(v[0]+maxdistance, v[1]+maxdistance)
 
     #-- the results of the viewshed in npvs, all values=0
-    npvs = numpy.ones(d.shape, dtype=numpy.int8)*3
-    
-    for i,(row_orig , row) in enumerate(zip(npi,npvs)):
-        for j,(val_orig,val) in enumerate(zip( row_orig , row)):
+    # npvs = numpy.ones(d.shape, dtype=numpy.int8)
+    npvs = numpy.ones(d.shape, dtype=bool)
+
+    for i , _ in enumerate(npvs):
+        for j in enumerate(_):
             if i<vrow_top or i>vrow_bottom:
                 continue
             elif j<vcol_left or j>vcol_right:
@@ -33,7 +34,20 @@ def circle_make(d, v, maxdistance ):
             # npvs[i,j] = npi[i,j]
             # circle compute
             if ((math.pow((d.xy(i,j)[0] - v[0]),2) + math.pow( (d.xy(i,j)[1] - v[1]) , 2)  ) < math.pow(maxdistance,2)):
-                npvs[i,j] = npi[i,j]
+                npvs[i,j] = True
+
+
+    # for i,(row_orig , row) in enumerate(zip(npi,npvs)):
+    #     for j,(val_orig,val) in enumerate(zip( row_orig , row)):
+    #         if i<vrow_top or i>vrow_bottom:
+    #             continue
+    #         elif j<vcol_left or j>vcol_right:
+    #             continue
+    #         # do circle here #actually a square for now
+    #         # npvs[i,j] = npi[i,j]
+    #         # circle compute
+    #         if ((math.pow((d.xy(i,j)[0] - v[0]),2) + math.pow( (d.xy(i,j)[1] - v[1]) , 2)  ) < math.pow(maxdistance,2)):
+    #             npvs[i,j] = True
 
 
     #-- put center  pixel with value of height
@@ -58,21 +72,22 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
     """  
     npi  = d.read(1)
     #-- fetch the 1st viewpoint
-    v = viewpoints[0]
-
-    circle_make(d, v, maxdistance)
+    # v = viewpoints[0]
+    
+    npvs = [circle_make(d, v, maxdistance) for v in viewpoints]
     # -- write this to disk
-    with rasterio.open(output_file, 'w', 
+    # with rasterio.open(output_file, 'w', 
 
-                       driver='GTiff', 
-                       height=npi.shape[0],
-                       width=npi.shape[1], 
-                       count=1, 
-                       dtype=rasterio.uint8,
-                       crs=d.crs, 
-                       transform=d.transform) as dst:
-        dst.write(npvs.astype(rasterio.uint8), 1)
+    #                    driver='GTiff', 
+    #                    height=npi.shape[0],
+    #                    width=npi.shape[1], 
+    #                    count=1, 
+    #                    dtype=rasterio.uint8,
+    #                    crs=d.crs, 
+    #                    transform=d.transform) as dst:
+    #     dst.write(npvs.astype(rasterio.uint8), 1)
 
+    print(npvs)
     print("Viewshed file written to '%s'" % output_file)
 #%%
 
