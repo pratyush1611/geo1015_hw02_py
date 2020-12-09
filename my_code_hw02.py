@@ -58,22 +58,22 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
 
 
 
-# def Bresenham_with_rasterio():
-#     # d = rasterio dataset as above
-#     a = (10, 10)
-#     b = (100, 50)
-#     #-- create in-memory a simple GeoJSON LineString
-#     v = {}
-#     v["type"] = "LineString"
-#     v["coordinates"] = []
-#     v["coordinates"].append(d.xy(a[0], a[1]))
-#     v["coordinates"].append(d.xy(b[0], b[1]))
-#     shapes = [(v, 1)]
-#     re = features.rasterize(shapes, 
-#                             out_shape=d.shape, 
-#                             # all_touched=True,
-#                             transform=d.transform)
-#     # re is a numpy with d.shape where the line is rasterised (values != 0)
+def Bresenham_with_rasterio(d):
+    # d = rasterio dataset as above
+    a = (10, 10)
+    b = (100, 50)
+    #-- create in-memory a simple GeoJSON LineString
+    v = {}
+    v["type"] = "LineString"
+    v["coordinates"] = []
+    v["coordinates"].append(d.xy(a[0], a[1]))
+    v["coordinates"].append(d.xy(b[0], b[1]))
+    shapes = [(v, 1)]
+    re = features.rasterize(shapes, 
+                            out_shape=d.shape, 
+                            # all_touched=True,
+                            transform=d.transform)
+    # re is a numpy with d.shape where the line is rasterised (values != 0)
 
 
 
