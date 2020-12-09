@@ -22,10 +22,10 @@ def circle_make(d, v, maxdistance ):
 
     #-- the results of the viewshed in npvs, all values=0
     # npvs = numpy.ones(d.shape, dtype=numpy.int8)
-    npvs = numpy.ones(d.shape, dtype=bool)
+    npvs = numpy.zeros(d.shape, dtype=bool)
 
     for i , _ in enumerate(npvs):
-        for j in enumerate(_):
+        for j,__ in enumerate(_):
             if i<vrow_top or i>vrow_bottom:
                 continue
             elif j<vcol_left or j>vcol_right:
