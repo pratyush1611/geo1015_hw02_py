@@ -1,9 +1,9 @@
 #-- my_code_hw02.py
 #-- Assignment 02 GEO1015.2020
-#-- [YOUR NAME] 
-#-- [YOUR STUDENT NUMBER] 
-#-- [YOUR NAME] 
-#-- [YOUR STUDENT NUMBER] 
+#-- Pratyush Kumar
+#-- 5359252 
+#-- Georgios Triantafyllou
+#-- 5381738 
 
 import sys
 import math
