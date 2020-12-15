@@ -1,8 +1,8 @@
 #-- my_code_hw02.py
 #-- Assignment 02 GEO1015.2020
-#-- [YOUR NAME] 
-#-- [YOUR STUDENT NUMBER] 
-#-- [YOUR NAME] 
+#-- Pratyush Kumar
+#-- 5359252
+#-- Giorgos Triantafyllou
 #-- [YOUR STUDENT NUMBER] 
 #%%
 import sys
@@ -54,6 +54,10 @@ def circle_make(d, v, maxdistance ):
     npvs[vrow_center , vcol_center] = v[2]
     return npvs
 #   
+# def viewshedinator(npvs):
+    #get brasenhams line and check in the line for elevation as compared to the tangent
+    
+
 
 def output_viewshed(d, viewpoints, maxdistance, output_file):
     """
@@ -94,10 +98,11 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
 #%%
 
 
-def Bresenham_with_rasterio(d, a, b):
+def Bresenham_with_rasterio(d, center, point_on_boundary):
     # d = rasterio dataset as above
-    a = (10, 10)
-    b = (100, 50)
+    a = center
+    b = point_on_boundary
+
     #-- create in-memory a simple GeoJSON LineString
     v = {}
     v["type"] = "LineString"
@@ -105,11 +110,35 @@ def Bresenham_with_rasterio(d, a, b):
     v["coordinates"].append(d.xy(a[0], a[1]))
     v["coordinates"].append(d.xy(b[0], b[1]))
     shapes = [(v, 1)]
-    re = features.rasterize(shapes, 
+    rasterized_line = features.rasterize(shapes, 
                             out_shape=d.shape, 
                             # all_touched=True,
                             transform=d.transform)
-    # re is a numpy with d.shape where the line is rasterised (values != 0)
+
+    # re is a numpy with d.shape where the line is rasterised (values != 0
+    indexlist = np.argwhere(rasterized_line==1)
+    
+    # cases of the output list of indices
+    # 1: the point is in q1 as compared to the center
+    if a[0]<b[0] and a[1]<b[1]:
+        # do nothing, the rasterized line assumes that it has been provided in first quadrant
+        finlist = indexlist
+    # 2: the point is in q2 as compared to center
+    if a[0]>b[0] and a[1]<b[1]:
+        # invert the x values to make it like q1
+        finlist = sorted(indexlist.tolist() , key = (lambda x: (-x[0], x[1]) ) )
+    # 4: point is in q3 wrt center
+    if a[0]>b[0] and a[1]>b[1]:
+        # invert both the x and y values to make it like q1
+        finlist = sorted(indexlist.tolist() , key = (lambda x: (-x[0], -x[1]) ) )
+    # 3: the point is in q4 wrt center
+    if a[0]<b[0] and a[1]>b[1]:
+        # invert only y value to make like q1
+        finlist = sorted(indexlist.tolist() , key = (lambda x: (x[0], -x[1]) ) )
+
+
+    return finlist
 
 
 
+# %%
