@@ -81,34 +81,33 @@ def circle_make(d, v, maxdistance ):
 
     """
 
-    # redo circle generation this time take in to account that the boundary needs to be taken instantaneously
-    # for i , _ in enumerate(npvs):
-    #     for j,__ in enumerate(_):
-    #         if i<vrow_top or i>vrow_bottom:
-    #             continue
-    #         elif j<vcol_left or j>vcol_right:
-    #             continue
-    #         # do circle here #actually a square for now
-    #         # npvs[i,j] = npi[i,j]
-    #         # circle compute
-    #         if ((math.pow((d.xy(i,j)[0] - v[0]),2) + math.pow( (d.xy(i,j)[1] - v[1]) , 2)  ) < math.pow(maxdistance,2)):
-    #             npvs[i,j] = True
-    #             # circle_boundary_list.append()
-    
+    # make a circle    # 
     for i in range(vrow_top, vrow_bottom+1):
-        # i = vrow_top + row_iter
-        temp=[]
         for j in range(vcol_left, vcol_right+1):
-            # col_num = vcol_left + col_iter
-            compare distance
+            # compare distance
             if ((math.pow((d.xy(i,j)[0] - v[0]),2) + math.pow( (d.xy(i,j)[1] - v[1]) , 2)  ) < math.pow(maxdistance,2)):
                 npvs[i,j] = True
 
+    for indeX , i in enumerate(npvs):
+        # for j in range(vcol_left, vcol_right+1):
+        indices = np.argwhere(i==True)
+        # print(indices)
+        if len(indices)>1:
+            # print(indices[-1])
+            ind_first= (indeX, indices[0][0])
+            ind_last = (indeX, indices[-1][0])
+            circle_boundary_list.append(ind_first)
+            circle_boundary_list.append(ind_last)
+
+        elif len(indices)==1:
+            ind_first= (indeX, indices[0][0])
+            print(ind_first)
+            circle_boundary_list.append(ind_first)
 
     #-- put center  pixel with value of height
     npvs[vrow_center , vcol_center] = v[2]
     return npvs, circle_boundary_list
-#   
+#%%
 def viewshedinator(d, v, maxdistance):
     # get brasenhams line and check in the line for elevation as compared to the tangent
     vrow_center, vcol_center = d.index(v[0], v[1])
@@ -117,15 +116,17 @@ def viewshedinator(d, v, maxdistance):
 
     #-- the results of the viewshed in npvs, all values=0
     # npvs = numpy.ones(d.shape, dtype=numpy.int8)
-    npvs = numpy.zeros(d.shape, dtype=bool)
-    circle_boundary_list=[]
 
-    for i , _ in enumerate(npvs):
-        for j,__ in enumerate(_):
-            if i<vrow_top or i>vrow_bottom:
-                continue
-            elif j<vcol_left or j>vcol_right:
-                continue
+
+    # npvs = numpy.zeros(d.shape, dtype=bool)
+    # circle_boundary_list=[]
+
+    # for i , _ in enumerate(npvs):
+    #     for j,__ in enumerate(_):
+    #         if i<vrow_top or i>vrow_bottom:
+    #             continue
+    #         elif j<vcol_left or j>vcol_right:
+    #             continue
 
 
 def output_viewshed(d, viewpoints, maxdistance, output_file):
@@ -157,7 +158,7 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
     #                    height=npi.shape[0],
     #                    width=npi.shape[1], 
     #                    count=1, 
-    #                    dtype=rasterio.uint8,
+                        # dtype=rasterio.uint8,
     #                    crs=d.crs, 
     #                    transform=d.transform) as dst:
     #     dst.write(npvs.astype(rasterio.uint8), 1)
