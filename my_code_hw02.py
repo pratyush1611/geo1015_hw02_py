@@ -22,8 +22,9 @@ def circle_make(d, v, maxdistance ):
 
     #-- the results of the viewshed in npvs, all values=0
     # npvs = numpy.ones(d.shape, dtype=numpy.int8)
-    npvs = numpy.zeros(d.shape, dtype=bool)
-
+    npvs = numpy.zeros(d.shape, dtype=bool) #full of false
+    circle_boundary_list=[]
+    """
     for i , _ in enumerate(npvs):
         for j,__ in enumerate(_):
             if i<vrow_top or i>vrow_bottom:
@@ -35,10 +36,54 @@ def circle_make(d, v, maxdistance ):
             # circle compute
             if ((math.pow((d.xy(i,j)[0] - v[0]),2) + math.pow( (d.xy(i,j)[1] - v[1]) , 2)  ) < math.pow(maxdistance,2)):
                 npvs[i,j] = True
+                # circle_boundary_list.append()
 
+    # flag=True
+    # for i , _ in enumerate(npvs):
+    #     for j,__ in enumerate(_):
+    #         if i<vrow_top or i>vrow_bottom:
+    #             continue
+    #         elif j<vcol_left or j>vcol_right:
+    #             continue
+    
 
-    # for i,(row_orig , row) in enumerate(zip(npi,npvs)):
-    #     for j,(val_orig,val) in enumerate(zip( row_orig , row)):
+    flag=True
+    for i , _ in enumerate(npvs):
+        for j,__ in enumerate(_):
+            if i<vrow_top or i>vrow_bottom:
+                continue
+            elif j<vcol_left or j>vcol_right:
+                continue
+            # within the bounding box of the circle
+            if npvs[i,j]== True:
+                flag=False
+                # circle has been hit
+                circle_boundary_list.append((i,j))
+            # if npvs[i, len(_)-j]==True:
+            #     flag=False
+            #     circle_boundary_list.append((i,j))
+            if flag != True:
+                continue
+    flag=True
+    for i , _ in enumerate(npvs[::-1]):
+        for j,__ in enumerate(_):
+            if i<vrow_top or i>vrow_bottom:
+                continue
+            elif j<vcol_left or j>vcol_right:
+                continue
+            # within the bounding box of the circle
+            if npvs[i,j]== True:
+                flag=False
+                # circle has been hit
+                circle_boundary_list.append((i,len(_)-j))
+            if flag != True:
+                continue
+
+    """
+
+    # redo circle generation this time take in to account that the boundary needs to be taken instantaneously
+    # for i , _ in enumerate(npvs):
+    #     for j,__ in enumerate(_):
     #         if i<vrow_top or i>vrow_bottom:
     #             continue
     #         elif j<vcol_left or j>vcol_right:
@@ -48,15 +93,39 @@ def circle_make(d, v, maxdistance ):
     #         # circle compute
     #         if ((math.pow((d.xy(i,j)[0] - v[0]),2) + math.pow( (d.xy(i,j)[1] - v[1]) , 2)  ) < math.pow(maxdistance,2)):
     #             npvs[i,j] = True
+    #             # circle_boundary_list.append()
+    
+    for i in range(vrow_top, vrow_bottom+1):
+        # i = vrow_top + row_iter
+        temp=[]
+        for j in range(vcol_left, vcol_right+1):
+            # col_num = vcol_left + col_iter
+            compare distance
+            if ((math.pow((d.xy(i,j)[0] - v[0]),2) + math.pow( (d.xy(i,j)[1] - v[1]) , 2)  ) < math.pow(maxdistance,2)):
+                npvs[i,j] = True
 
 
     #-- put center  pixel with value of height
     npvs[vrow_center , vcol_center] = v[2]
-    return npvs
+    return npvs, circle_boundary_list
 #   
-# def viewshedinator(npvs):
-    #get brasenhams line and check in the line for elevation as compared to the tangent
-    
+def viewshedinator(d, v, maxdistance):
+    # get brasenhams line and check in the line for elevation as compared to the tangent
+    vrow_center, vcol_center = d.index(v[0], v[1])
+    vrow_bottom,  vcol_left = d.index(v[0]-maxdistance, v[1]-maxdistance)
+    vrow_top, vcol_right    = d.index(v[0]+maxdistance, v[1]+maxdistance)
+
+    #-- the results of the viewshed in npvs, all values=0
+    # npvs = numpy.ones(d.shape, dtype=numpy.int8)
+    npvs = numpy.zeros(d.shape, dtype=bool)
+    circle_boundary_list=[]
+
+    for i , _ in enumerate(npvs):
+        for j,__ in enumerate(_):
+            if i<vrow_top or i>vrow_bottom:
+                continue
+            elif j<vcol_left or j>vcol_right:
+                continue
 
 
 def output_viewshed(d, viewpoints, maxdistance, output_file):
@@ -81,20 +150,22 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
     npvs_array = [circle_make(d, v, maxdistance) for v in viewpoints]
     npvs=npvs_array[1]
     
-    # #write this to disk
-    with rasterio.open(output_file, 'w', 
+    # # #write this to disk
+    # with rasterio.open(output_file, 'w', 
 
-                       driver='GTiff', 
-                       height=npi.shape[0],
-                       width=npi.shape[1], 
-                       count=1, 
-                       dtype=rasterio.uint8,
-                       crs=d.crs, 
-                       transform=d.transform) as dst:
-        dst.write(npvs.astype(rasterio.uint8), 1)
+    #                    driver='GTiff', 
+    #                    height=npi.shape[0],
+    #                    width=npi.shape[1], 
+    #                    count=1, 
+    #                    dtype=rasterio.uint8,
+    #                    crs=d.crs, 
+    #                    transform=d.transform) as dst:
+    #     dst.write(npvs.astype(rasterio.uint8), 1)
 
     print(npvs)
     print("Viewshed file written to '%s'" % output_file)
+
+    return(npvs)
 #%%
 
 
@@ -124,18 +195,19 @@ def Bresenham_with_rasterio(d, center, point_on_boundary):
         # do nothing, the rasterized line assumes that it has been provided in first quadrant
         finlist = indexlist
     # 2: the point is in q2 as compared to center
-    if a[0]>b[0] and a[1]<b[1]:
+    elif a[0]>b[0] and a[1]<b[1]:
         # invert the x values to make it like q1
         finlist = sorted(indexlist.tolist() , key = (lambda x: (-x[0], x[1]) ) )
     # 4: point is in q3 wrt center
-    if a[0]>b[0] and a[1]>b[1]:
+    elif a[0]>b[0] and a[1]>b[1]:
         # invert both the x and y values to make it like q1
         finlist = sorted(indexlist.tolist() , key = (lambda x: (-x[0], -x[1]) ) )
     # 3: the point is in q4 wrt center
-    if a[0]<b[0] and a[1]>b[1]:
+    elif a[0]<b[0] and a[1]>b[1]:
         # invert only y value to make like q1
         finlist = sorted(indexlist.tolist() , key = (lambda x: (x[0], -x[1]) ) )
 
+    del indexlist
 
     return finlist
 
