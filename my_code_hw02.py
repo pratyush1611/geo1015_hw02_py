@@ -19,31 +19,15 @@ def circle_make(d, v, maxdistance ):
         v (viewpoint): viewpoint
         maxdistance (float): distance of radius
     """
-    #  check if a full circle can be made
-
-
     #-- index of this point in the numpy raster
     vrow_bottom,  vcol_left = d.index(v[0]-maxdistance, v[1]-maxdistance)
     vrow_top, vcol_right    = d.index(v[0]+maxdistance, v[1]+maxdistance)
 
 
-    if vrow_bottom>d.shape[0]  or vcol_left<0 or vrow_top<0 or vcol_right>d.shape[1]:
-        # true triggered
-        # circle not formed
-        if vrow_bottom>d.shape[0]:
-            vrow_bottom=d.shape[0]
-        if vcol_left<0:
-            vcol_left=0
-        if vrow_top<0:
-            vrow_top = 0
-        if vcol_right < d.shape[1]:
-            vcol_right = d.shape[1]
-
     #-- the results of the viewshed in npvs, all values=0
     # npvs = numpy.ones(d.shape, dtype=numpy.int8)
     npvs = numpy.zeros(d.shape, dtype=bool) #full of false
     circle_boundary_list=[]
-
 
     # make a circle inside npvs  
     for i in range(vrow_top, vrow_bottom+1):
@@ -53,7 +37,7 @@ def circle_make(d, v, maxdistance ):
                 try :
                     npvs[i,j] = True
                 except:
-                    print(i,j)
+                    pass
     # use the npvs to calculate the boundary of circle
     # check the npvs row wise, take first and last pixel in a circle per row, 
     # which form boundary
