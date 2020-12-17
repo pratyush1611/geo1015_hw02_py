@@ -11,9 +11,15 @@ import numpy
 import rasterio
 from rasterio import features
 #%%
-
-
 def circle_make(d, v, maxdistance ):
+    """returns an array containing a circle and a list containing the boundary of the circle
+
+    Args:
+        d (rasterio dataset): raster
+        v (viewpoint): viewpoint
+        maxdistance (float): distance of radius
+    """
+
     npi  = d.read(1)
     #-- index of this point in the numpy raster
     vrow_center, vcol_center = d.index(v[0], v[1])
@@ -90,7 +96,6 @@ def circle_make(d, v, maxdistance ):
                 npvs[i,j] = True
 
     for indeX , i in enumerate(npvs):
-        # for j in range(vcol_left, vcol_right+1):
         indices = np.argwhere(i==True)
         if len(indices)>1:
             ind_first= (indeX, indices[0][0])
@@ -110,12 +115,39 @@ def circle_make(d, v, maxdistance ):
 #%%
 def viewshedinator(d, v, maxdistance):
     # get brasenhams line and check in the line for elevation as compared to the tangent
-    vrow_center, vcol_center = d.index(v[0], v[1])
+    center = vrow_center, vcol_center = d.index(v[0], v[1])
     vrow_bottom,  vcol_left = d.index(v[0]-maxdistance, v[1]-maxdistance)
     vrow_top, vcol_right    = d.index(v[0]+maxdistance, v[1]+maxdistance)
 
+    npi = d.read(1)
 
-  
+    # get the boundaries of the circle
+    circ_bnd = circle_make(d, center , maxdistance )[1] 
+    npvs = np.zeros(d.shape , dtype=bool)
+
+    # for loop
+    # get the indices of bresenham line from bound to center for every point in bound
+
+    # set tan as pointing down
+    tan=-101
+    for point in circ_bnd:
+        # computer bresenham line for every point in boundary
+        bresen_index = Bresenham_with_rasterio(d, center , point)
+        
+        for indices in bresen_index[1:] :
+            # calculate tangent
+            pix_x,pix_y = d.res
+            del_row = (indices[0] - center[0])*pix_x
+            del_col = (indices[1] - center[1])*pix_y
+            leng = (math.sqrt(math.pow( del_row , 2) + math.pow( del_col , 2) ))
+            height = v[2] + npi[ center[0] , center[1] ]
+            tan_ = arctan(leng/height)
+            if tan_>=tan:
+                # update tan value
+                tan=tan_
+                npvs[indices[0],indices[1]]=1
+                
+
 
 
 def output_viewshed(d, viewpoints, maxdistance, output_file):
