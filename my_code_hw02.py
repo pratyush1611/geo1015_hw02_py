@@ -24,6 +24,7 @@ def circle_make(d, v, maxdistance ):
     # npvs = numpy.ones(d.shape, dtype=numpy.int8)
     npvs = numpy.zeros(d.shape, dtype=bool) #full of false
     circle_boundary_list=[]
+
     """
     for i , _ in enumerate(npvs):
         for j,__ in enumerate(_):
@@ -91,9 +92,7 @@ def circle_make(d, v, maxdistance ):
     for indeX , i in enumerate(npvs):
         # for j in range(vcol_left, vcol_right+1):
         indices = np.argwhere(i==True)
-        # print(indices)
         if len(indices)>1:
-            # print(indices[-1])
             ind_first= (indeX, indices[0][0])
             ind_last = (indeX, indices[-1][0])
             circle_boundary_list.append(ind_first)
@@ -114,19 +113,7 @@ def viewshedinator(d, v, maxdistance):
     vrow_bottom,  vcol_left = d.index(v[0]-maxdistance, v[1]-maxdistance)
     vrow_top, vcol_right    = d.index(v[0]+maxdistance, v[1]+maxdistance)
 
-    #-- the results of the viewshed in npvs, all values=0
-    # npvs = numpy.ones(d.shape, dtype=numpy.int8)
-
-
-    # npvs = numpy.zeros(d.shape, dtype=bool)
-    # circle_boundary_list=[]
-
-    # for i , _ in enumerate(npvs):
-    #     for j,__ in enumerate(_):
-    #         if i<vrow_top or i>vrow_bottom:
-    #             continue
-    #         elif j<vcol_left or j>vcol_right:
-    #             continue
+  
 
 
 def output_viewshed(d, viewpoints, maxdistance, output_file):
@@ -151,17 +138,17 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
     npvs_array = [circle_make(d, v, maxdistance) for v in viewpoints]
     npvs=npvs_array[1]
     
-    # # #write this to disk
-    # with rasterio.open(output_file, 'w', 
+    # #write this to disk
+    with rasterio.open(output_file, 'w', 
 
-    #                    driver='GTiff', 
-    #                    height=npi.shape[0],
-    #                    width=npi.shape[1], 
-    #                    count=1, 
-                        # dtype=rasterio.uint8,
-    #                    crs=d.crs, 
-    #                    transform=d.transform) as dst:
-    #     dst.write(npvs.astype(rasterio.uint8), 1)
+                       driver='GTiff', 
+                       height=npi.shape[0],
+                       width=npi.shape[1], 
+                       count=1, 
+                       dtype=rasterio.uint8,
+                       crs=d.crs, 
+                       transform=d.transform) as dst:
+        dst.write(npvs.astype(rasterio.uint8), 1)
 
     print(npvs)
     print("Viewshed file written to '%s'" % output_file)
@@ -188,7 +175,7 @@ def Bresenham_with_rasterio(d, center, point_on_boundary):
                             transform=d.transform)
 
     # re is a numpy with d.shape where the line is rasterised (values != 0
-    indexlist = np.argwhere(rasterized_line==1)
+    indexlist = numpy.argwhere(rasterized_line==1)
     
     # cases of the output list of indices
     # 1: the point is in q1 as compared to the center
