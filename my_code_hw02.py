@@ -5,7 +5,6 @@
 #-- Georgios Triantafyllou
 #-- 5381738
 
-#%%
 import sys
 import math
 import numpy
@@ -20,12 +19,25 @@ def circle_make(d, v, maxdistance ):
         v (viewpoint): viewpoint
         maxdistance (float): distance of radius
     """
+    #  check if a full circle can be made
 
-    npi  = d.read(1)
+
     #-- index of this point in the numpy raster
-    vrow_center, vcol_center = d.index(v[0], v[1])
     vrow_bottom,  vcol_left = d.index(v[0]-maxdistance, v[1]-maxdistance)
     vrow_top, vcol_right    = d.index(v[0]+maxdistance, v[1]+maxdistance)
+
+
+    if vrow_bottom>d.shape[0]  or vcol_left<0 or vrow_top<0 or vcol_right>d.shape[1]:
+        # true triggered
+        # circle not formed
+        if vrow_bottom>d.shape[0]:
+            vrow_bottom=d.shape[0]
+        if vcol_left<0:
+            vcol_left=0
+        if vrow_top<0:
+            vrow_top = 0
+        if vcol_right < d.shape[1]:
+            vcol_right = d.shape[1]
 
     #-- the results of the viewshed in npvs, all values=0
     # npvs = numpy.ones(d.shape, dtype=numpy.int8)
@@ -33,13 +45,18 @@ def circle_make(d, v, maxdistance ):
     circle_boundary_list=[]
 
 
-    # make a circle    # 
+    # make a circle inside npvs  
     for i in range(vrow_top, vrow_bottom+1):
         for j in range(vcol_left, vcol_right+1):
             # compare distance
             if ((math.pow((d.xy(i,j)[0] - v[0]),2) + math.pow( (d.xy(i,j)[1] - v[1]) , 2)  ) < math.pow(maxdistance,2)):
-                npvs[i,j] = True
-
+                try :
+                    npvs[i,j] = True
+                except:
+                    print(i,j)
+    # use the npvs to calculate the boundary of circle
+    # check the npvs row wise, take first and last pixel in a circle per row, 
+    # which form boundary
     for indeX , i in enumerate(npvs):
         indices = numpy.argwhere(i==True)
         if len(indices)>1:
@@ -53,6 +70,8 @@ def circle_make(d, v, maxdistance ):
             print(ind_first)
             circle_boundary_list.append(ind_first)
 
+    # check the npvs row wise, take first and last pixel in a circle per column, 
+    # which form boundary
     #  find boundaries by going from top to down
     for indY , j in enumerate(npvs[0]):
         col = npvs[:,indY]
@@ -69,34 +88,34 @@ def circle_make(d, v, maxdistance ):
             print(ind_first)
             circle_boundary_list.append(ind_first)
 
-    # circle_boundary_list = numpy.unique(circle_boundary_list)
-    #-- put center  pixel with value of height
-    # npvs[vrow_center , vcol_center] = 2#v[2]
-    return  npvs , circle_boundary_list
+    circ_bnd = []                                                                                                                                 
+    for dat in circle_boundary_list:                                                                                                                                
+        if dat not in circ_bnd:                                                                                                                     
+            circ_bnd.append(dat)  
+    
+    del circle_boundary_list
+    del npvs
+    return  circ_bnd
 #%%
 def viewshedinator(d, v, maxdistance, npvs):
     # get brasenhams line and check in the line for elevation as compared to the tangent
-    center = vrow_center, vcol_center = d.index(v[0], v[1])
-    vrow_bottom,  vcol_left = d.index(v[0]-maxdistance, v[1]-maxdistance)
-    vrow_top, vcol_right    = d.index(v[0]+maxdistance, v[1]+maxdistance)
+    center = d.index(v[0], v[1])
 
     npi = d.read(1)
-    pix_x,pix_y = d.res
+
     # get the boundaries of the circle
-    bnd_list = circle_make(d, (v[0],v[1]) , maxdistance )[1] 
-    circ_bnd = []                                                                                                                                 
-    for dat in bnd_list:                                                                                                                                
-        if dat not in circ_bnd:                                                                                                                     
-            circ_bnd.append(dat)  
-        
+    circ_bnd = circle_make(d, (v[0],v[1]) , maxdistance )
     cent_height = v[2] + npi[ center[0] , center[1] ]
+    
+    #-- put center  pixel with value of height
     npvs[center[0],center[1]] = 2
-    # get the indices of bresenham line from bound to center for every point in bound
+
     for pt in circ_bnd:
         # set tan as pointing down
+        # set altitude as way below sea level
         temp_tan = -1000
         temp_alt = -1000
-        # computer bresenham line for every point in boundary
+        # get the indices of bresenham line from bound to center for every point in bound
         bresen_index = Bresenham_with_rasterio(d, center , pt)
 
         for point in bresen_index[1:]:
