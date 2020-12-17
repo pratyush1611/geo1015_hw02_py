@@ -96,7 +96,7 @@ def circle_make(d, v, maxdistance ):
                 npvs[i,j] = True
 
     for indeX , i in enumerate(npvs):
-        indices = np.argwhere(i==True)
+        indices = numpy.argwhere(i==True)
         if len(indices)>1:
             ind_first= (indeX, indices[0][0])
             ind_last = (indeX, indices[-1][0])
@@ -108,9 +108,25 @@ def circle_make(d, v, maxdistance ):
             print(ind_first)
             circle_boundary_list.append(ind_first)
 
+    #  find boundaries by going from top to down
+    for indY , j in enumerate(npvs[0]):
+        col = npvs[:,indY]
+        indices= numpy.argwhere(col==True)
 
+        if len(indices)>1:
+            ind_first= (indices[0][0],  indY)
+            ind_last = (indices[-1][0], indY)
+            circle_boundary_list.append(ind_first)
+            circle_boundary_list.append(ind_last)
+
+        elif len(indices)==1:
+            ind_first= ( indices[0][0] , indY)
+            print(ind_first)
+            circle_boundary_list.append(ind_first)
+
+    # circle_boundary_list = numpy.unique(circle_boundary_list)
     #-- put center  pixel with value of height
-    npvs[vrow_center , vcol_center] = v[2]
+    npvs[vrow_center , vcol_center] = 2#v[2]
     return npvs, circle_boundary_list
 #%%
 def viewshedinator(d, v, maxdistance):
@@ -120,11 +136,11 @@ def viewshedinator(d, v, maxdistance):
     vrow_top, vcol_right    = d.index(v[0]+maxdistance, v[1]+maxdistance)
 
     npi = d.read(1)
-
+    pix_x,pix_y = d.res
     # get the boundaries of the circle
-    circ_bnd = circle_make(d, center , maxdistance )[1] 
-    npvs = np.zeros(d.shape , dtype=bool)
-
+    circ_bnd = circle_make(d, (v[0],v[1]) , maxdistance )[1] 
+    npvs = numpy.ones(d.shape )*3
+    cent_height = v[2] + npi[ center[0] , center[1] ]
     # for loop
     # get the indices of bresenham line from bound to center for every point in bound
 
@@ -136,18 +152,22 @@ def viewshedinator(d, v, maxdistance):
         
         for indices in bresen_index[1:] :
             # calculate tangent
-            pix_x,pix_y = d.res
-            del_row = (indices[0] - center[0])*pix_x
-            del_col = (indices[1] - center[1])*pix_y
+
+            del_row = (indices[0] - center[0]) * pix_x
+            del_col = (indices[1] - center[1]) * pix_y
             leng = (math.sqrt(math.pow( del_row , 2) + math.pow( del_col , 2) ))
-            height = v[2] + npi[ center[0] , center[1] ]
-            tan_ = arctan(leng/height)
+            height = npi[indices[0], indices[1]]   
+            tan_ = math.atan(leng/height)
+            
             if tan_>=tan:
                 # update tan value
                 tan=tan_
-                npvs[indices[0],indices[1]]=1
-                
+                npvs[indices[0],indices[1]] = 1
+            elif tan_<tan:
+                npvs[indices[0],indices[1]] = 0
 
+    npvs[center[0],center[1]] = 2
+    return npvs
 
 
 def output_viewshed(d, viewpoints, maxdistance, output_file):
@@ -167,11 +187,13 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
     """  
     npi  = d.read(1)
     #-- fetch the 1st viewpoint
-    # v = viewpoints[0]
+    v = viewpoints[0]
     
-    npvs_array = [circle_make(d, v, maxdistance) for v in viewpoints]
-    npvs=npvs_array[1]
-    
+    # npvs_array = [circle_make(d, v, maxdistance) for v in viewpoints]
+    npvs= viewshedinator(d, v, maxdistance)
+    # npvs = numpy.ones(d.shape) * 3
+    # for ind in circle_make(d, v, maxdistance)[1]:
+    #     npvs[ind[0],ind[1]]=100
     # #write this to disk
     with rasterio.open(output_file, 'w', 
 
@@ -221,22 +243,22 @@ def Bresenham_with_rasterio(d, center, point_on_boundary):
 
     # re is a numpy with d.shape where the line is rasterised (values != 0
     indexlist = numpy.argwhere(rasterized_line==1)
-    
+    finlist=[]
     # cases of the output list of indices
     # 1: the point is in q1 as compared to the center
     if a[0]<b[0] and a[1]<b[1]:
         # do nothing, the rasterized line assumes that it has been provided in first quadrant
         finlist = indexlist
     # 2: the point is in q2 as compared to center
-    elif a[0]>b[0] and a[1]<b[1]:
+    elif a[0]>b[0] and a[1]<=b[1]:
         # invert the x values to make it like q1
         finlist = sorted(indexlist.tolist() , key = (lambda x: (-x[0], x[1]) ) )
     # 4: point is in q3 wrt center
-    elif a[0]>b[0] and a[1]>b[1]:
+    elif a[0]>b[0] and a[1]>=b[1]:
         # invert both the x and y values to make it like q1
         finlist = sorted(indexlist.tolist() , key = (lambda x: (-x[0], -x[1]) ) )
     # 3: the point is in q4 wrt center
-    elif a[0]<b[0] and a[1]>b[1]:
+    elif a[0]<=b[0] and a[1]>b[1]:
         # invert only y value to make like q1
         finlist = sorted(indexlist.tolist() , key = (lambda x: (x[0], -x[1]) ) )
 
