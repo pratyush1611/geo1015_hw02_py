@@ -103,6 +103,7 @@ def circle_make(d, v, maxdistance ):
             print(ind_first)
             circle_boundary_list.append(ind_first)
 
+
     #-- put center  pixel with value of height
     npvs[vrow_center , vcol_center] = v[2]
     return npvs, circle_boundary_list
@@ -113,7 +114,7 @@ def viewshedinator(d, v, maxdistance):
     vrow_bottom,  vcol_left = d.index(v[0]-maxdistance, v[1]-maxdistance)
     vrow_top, vcol_right    = d.index(v[0]+maxdistance, v[1]+maxdistance)
 
-    
+
   
 
 
