@@ -113,6 +113,7 @@ def viewshedinator(d, v, maxdistance):
     vrow_bottom,  vcol_left = d.index(v[0]-maxdistance, v[1]-maxdistance)
     vrow_top, vcol_right    = d.index(v[0]+maxdistance, v[1]+maxdistance)
 
+    
   
 
 
@@ -158,6 +159,17 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
 
 
 def Bresenham_with_rasterio(d, center, point_on_boundary):
+    """returns a list of indices which are part of a line from center to the boundary
+    the center and boundary need to be given in form of indices 
+
+    Args:
+        d (rasterio data): raster sent as a rasterio data
+        center (tuple): indices of the center aka viewpoint
+        point_on_boundary (tuple): indices of the point on boundary of the visible area
+
+    Returns:
+        list: [description]
+    """
     # d = rasterio dataset as above
     a = center
     b = point_on_boundary
@@ -166,8 +178,8 @@ def Bresenham_with_rasterio(d, center, point_on_boundary):
     v = {}
     v["type"] = "LineString"
     v["coordinates"] = []
-    v["coordinates"].append(d.xy(a[0], a[1]))
-    v["coordinates"].append(d.xy(b[0], b[1]))
+    v["coordinates"].append(d.xy(a[0], a[1])) # takes the index
+    v["coordinates"].append(d.xy(b[0], b[1])) # takes the  index
     shapes = [(v, 1)]
     rasterized_line = features.rasterize(shapes, 
                             out_shape=d.shape, 
