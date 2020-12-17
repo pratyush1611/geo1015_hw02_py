@@ -2,15 +2,16 @@
 #-- Assignment 02 GEO1015.2020
 #-- Pratyush Kumar
 #-- 5359252
-#-- Giorgos Triantafyllou
-#-- [YOUR STUDENT NUMBER] 
+#-- Georgios Triantafyllou
+#-- 5381738
+
 #%%
 import sys
 import math
 import numpy
 import rasterio
 from rasterio import features
-#%%
+
 def circle_make(d, v, maxdistance ):
     """returns an array containing a circle and a list containing the boundary of the circle
 
@@ -31,62 +32,6 @@ def circle_make(d, v, maxdistance ):
     npvs = numpy.zeros(d.shape, dtype=bool) #full of false
     circle_boundary_list=[]
 
-    """
-    for i , _ in enumerate(npvs):
-        for j,__ in enumerate(_):
-            if i<vrow_top or i>vrow_bottom:
-                continue
-            elif j<vcol_left or j>vcol_right:
-                continue
-            # do circle here #actually a square for now
-            # npvs[i,j] = npi[i,j]
-            # circle compute
-            if ((math.pow((d.xy(i,j)[0] - v[0]),2) + math.pow( (d.xy(i,j)[1] - v[1]) , 2)  ) < math.pow(maxdistance,2)):
-                npvs[i,j] = True
-                # circle_boundary_list.append()
-
-    # flag=True
-    # for i , _ in enumerate(npvs):
-    #     for j,__ in enumerate(_):
-    #         if i<vrow_top or i>vrow_bottom:
-    #             continue
-    #         elif j<vcol_left or j>vcol_right:
-    #             continue
-    
-
-    flag=True
-    for i , _ in enumerate(npvs):
-        for j,__ in enumerate(_):
-            if i<vrow_top or i>vrow_bottom:
-                continue
-            elif j<vcol_left or j>vcol_right:
-                continue
-            # within the bounding box of the circle
-            if npvs[i,j]== True:
-                flag=False
-                # circle has been hit
-                circle_boundary_list.append((i,j))
-            # if npvs[i, len(_)-j]==True:
-            #     flag=False
-            #     circle_boundary_list.append((i,j))
-            if flag != True:
-                continue
-    flag=True
-    for i , _ in enumerate(npvs[::-1]):
-        for j,__ in enumerate(_):
-            if i<vrow_top or i>vrow_bottom:
-                continue
-            elif j<vcol_left or j>vcol_right:
-                continue
-            # within the bounding box of the circle
-            if npvs[i,j]== True:
-                flag=False
-                # circle has been hit
-                circle_boundary_list.append((i,len(_)-j))
-            if flag != True:
-                continue
-
-    """
 
     # make a circle    # 
     for i in range(vrow_top, vrow_bottom+1):
@@ -181,24 +126,7 @@ def viewshedinator(d, v, maxdistance, npvs):
                     npvs[point[0],point[1]] = 0
             elif npvs[point[0],point[1]] == 3: # if in the line it is not yet set, its not visible
                 npvs[point[0],point[1]] = 0 
-    
-        # for indices in bresen_index[1:] :
-        #     # calculate tangent
 
-        #     del_row = (indices[0] - center[0]) * pix_x
-        #     del_col = (indices[1] - center[1]) * pix_y
-        #     leng = (math.sqrt(math.pow( del_row , 2) + math.pow( del_col , 2) ))
-        #     height = npi[indices[0], indices[1]]   
-        #     tan_ = math.atan(leng/height)
-            
-        #     if tan_>=tan:
-        #         # update tan value
-        #         tan=tan_
-        #         npvs[indices[0],indices[1]] = 1
-        #     elif tan_<tan:
-        #         npvs[indices[0],indices[1]] = 0
-
-    
     return npvs
 
 
@@ -224,12 +152,7 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
     for v in viewpoints:
         npvs= viewshedinator(d, v, maxdistance , npvs)
 
-    # npvs = numpy.ones(d.shape) * 3
-    # for ind in circle_make(d, v, maxdistance)[1]:
-    #     npvs[ind[0],ind[1]]=100
-    # #write this to disk
     with rasterio.open(output_file, 'w', 
-
                        driver='GTiff', 
                        height=npi.shape[0],
                        width=npi.shape[1], 
@@ -241,42 +164,35 @@ def output_viewshed(d, viewpoints, maxdistance, output_file):
 
     print(npvs)
     print("Viewshed file written to '%s'" % output_file)
-
     return(npvs)
-#%%
-# def projected_dist(center, bound, point):
-#     d1 = numpy.array([bound[0] - center[0] , bound[1] - center[1]])
-#     d1_leng = math.sqrt(d1 @ d1)
-#     d1_unit = d1/d1_leng
-#     d2 = numpy.array( [center[0] - point[0]  ,  center[1] - point[1]] ) 
 
-#     # projection of d2 on d1
-#     return d2.dot(d1_unit)
 
-def projected_dist(start,end,current_pt):
-    #extract the two vectors
-    v1 = numpy.array([end[1]-start[1],end[0]-start[0]])
-    v2 = numpy.array([current_pt[1]-start[1],current_pt[0]-start[0]])
-    #get the length of the vector describing the line
-    Lv1 = numpy.sqrt(v1.dot(v1))
-    #and finally get the projected distance of current_pt on the line
-    dist = v1.dot(v2)/Lv1
-    return dist
 
-"""
+def projected_dist(center, bound, point):
+    d1 = numpy.array([bound[1] - center[1] , bound[0] - center[0]])
+    d1_leng = math.sqrt(d1@(d1))
+    d1_unit = d1/d1_leng
+    d2 = numpy.array( [point[1] - center[1]  ,  point[0] - center[0]] ) 
+
+    # projection of d2 on d1
+    ret = d2@(d1_unit)
+    return ret
+
+
+
 def Bresenham_with_rasterio(d, center, point_on_boundary):
-    # returns a list of indices which are part of a line from center to the boundary
-    # the center and boundary need to be given in form of indices 
+    """
+    returns a list of indices which are part of a line from center to the boundary
+    the center and boundary need to be given in form of indices 
 
-    # Args:
-    #     d (rasterio data): raster sent as a rasterio data
-    #     center (tuple): indices of the center aka viewpoint
-    #     point_on_boundary (tuple): indices of the point on boundary of the visible area
+    Args:
+        d (rasterio data): raster sent as a rasterio data
+        center (tuple): indices of the center aka viewpoint
+        point_on_boundary (tuple): indices of the point on boundary of the visible area
 
-    # Returns:
-    #     list: [description]
-    
-    # d = rasterio dataset as above
+    Returns:
+        list: [description]
+    """
     a = center
     b = point_on_boundary
 
@@ -289,62 +205,31 @@ def Bresenham_with_rasterio(d, center, point_on_boundary):
     shapes = [(v, 1)]
     rasterized_line = features.rasterize(shapes, 
                             out_shape=d.shape, 
-                            # all_touched=True,
+                            all_touched=True,
                             transform=d.transform)
 
     # re is a numpy with d.shape where the line is rasterised (values != 0
     indexlist = numpy.argwhere(rasterized_line==1)
-    finlist=[]
+    finlist=[tuple(i) for i in indexlist]
+    del indexlist
+
     # cases of the output list of indices
     # 1: the point is in q1 as compared to the center
     if a[0]<b[0] and a[1]<b[1]:
         # do nothing, the rasterized line assumes that it has been provided in first quadrant
-        finlist = indexlist
+        pass
     # 2: the point is in q2 as compared to center
     elif a[0]>b[0] and a[1]<=b[1]:
         # invert the x values to make it like q1
-        finlist = sorted(indexlist.tolist() , key = (lambda x: (-x[0], x[1]) ) )
+        finlist = sorted(finlist , key = (lambda x: (-x[0], x[1]) ) )
     # 4: point is in q3 wrt center
     elif a[0]>b[0] and a[1]>=b[1]:
         # invert both the x and y values to make it like q1
-        finlist = sorted(indexlist.tolist() , key = (lambda x: (-x[0], -x[1]) ) )
+        finlist = sorted(finlist , key = (lambda x: (-x[0], -x[1]) ) )
     # 3: the point is in q4 wrt center
     elif a[0]<=b[0] and a[1]>b[1]:
         # invert only y value to make like q1
-        finlist = sorted(indexlist.tolist() , key = (lambda x: (x[0], -x[1]) ) )
-
-    del indexlist
+        finlist = sorted(finlist , key = (lambda x: (x[0], -x[1]) ) )
 
     return finlist
-"""
-
-def Bresenham_with_rasterio(raster, start, end):
-    d = raster
-    a = start #format is (row,col)
-    b = end #format is (row, col)
-    #-- create in-memory a simple GeoJSON LineString
-    v = {}
-    v["type"] = "LineString"
-    v["coordinates"] = []
-    v["coordinates"].append(d.xy(a[0], a[1]))
-    v["coordinates"].append(d.xy(b[0], b[1]))
-    shapes = [(v, 1)]
-    re = features.rasterize(shapes,
-                            out_shape=d.shape,
-                            all_touched=True,
-                            transform=d.transform)
-    out = numpy.argwhere(re==1)
-    outlist = []
-    for el in out:
-        outlist.append(tuple(el))
-    #depending on the orientation of the line, sort cells in right order
-    if a[0]>b[0] and a[1]<=b[1]:
-        outlist = sorted(outlist, key=lambda x: (-x[0], x[1]))
-        #print('a')
-    elif a[0]>b[0] and a[1]>=b[1]:
-        outlist = sorted(outlist, key=lambda x: (-x[0], -x[1]))
-        #print('b')
-    elif a[0]<=b[0] and a[1]>b[1]:
-        outlist = sorted(outlist, key=lambda x: (x[0], -x[1]))
-    return outlist
 
